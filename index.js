@@ -1,28 +1,53 @@
-const p2s = require('postman-to-swagger');
+const Converter = require('api-spec-converter');
+const { transpile } = require('postman2openapi');
 
 
-const convertPostmanToSwagger = postmanCollectionJSON => {
-  const conversionOptions = {
-    target_spec: "swagger2.0"
-  };
+const transformPostmantoOAS = postmanCollectionJSON => {
   try {
-    const swagger = p2s(postmanCollectionJSON,conversionOptions);
+    const openapi = transpile(postmanCollectionJSON);
+    console.log(openapi);
     return {
       success: true,
-      swagger: swagger
-    };
+      oas: openapi
+    }
   }
   catch (e) {
     return {
       success: false,
-      error: e
-    };
+      error: new Error(e)
+    }
+  }
+}
+
+
+const convertPostmanToSwagger = async postmanCollectionJSON => {
+  const result = transformPostmantoOAS(postmanCollectionJSON);
+  const conversionOptions = {
+    from: 'openapi_3',
+    to: 'swagger_2'
+  }
+  if (result.success) {
+    conversionOptions.source = result.oas;
+    const converted = await Converter.convert(conversionOptions);
+    const conversionValidationResult = await converted.validate();
+    return {
+      success: true,
+      swagger: converted.stringify(),
+      errors: conversionValidationResult.errors,
+      warnings: conversionValidationResult.warnings
+    }
+  }
+  else {
+    return {
+      success: false,
+      errors: new Error(result.error)
+    }
   }
 }
 
 exports.handler =  async function(event, context) {
   const body = JSON.parse(event.body);
-  const postmanCollectionJSON = body.postmanCollectionJSON;
+  const postmanCollectionJSON = body;
   const result = convertPostmanToSwagger(postmanCollectionJSON);
   if (result.success) {
     return {
