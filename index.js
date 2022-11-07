@@ -46,19 +46,27 @@ const convertPostmanToSwagger = async postmanCollectionJSON => {
 }
 
 exports.handler =  async function(event, context) {
-  const body = JSON.parse(event.body);
-  const postmanCollectionJSON = body;
-  const result = convertPostmanToSwagger(postmanCollectionJSON);
+  const postmanCollectionJSON = JSON.parse(event.body);
+  const result = await convertPostmanToSwagger(postmanCollectionJSON);
   if (result.success) {
+    const responsePayload = {
+      swagger: JSON.parse(result.swagger),
+      errors: result.errors,
+      warnings: result.warnings
+    }
     return {
       statusCode: 200,
-      body: result.swagger
-    }
+      body: responsePayload
+    };
   }
   else {
+    const responsePayload = {
+      message: 'Error converting Postman collection to Swagger',
+      errors: result.errors
+    }
     return {
       statusCode: 400,
-      body: "Error Processing Postman Collection"
+      body: responsePayload
     }
   }
 }
