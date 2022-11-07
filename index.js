@@ -12,6 +12,7 @@ const transformPostmantoOAS = postmanCollectionJSON => {
     }
   }
   catch (e) {
+    console.log(e);
     return {
       success: false,
       error: new Error(e)
@@ -45,8 +46,19 @@ const convertPostmanToSwagger = async postmanCollectionJSON => {
   }
 }
 
-exports.handler =  async function(event, context) {
+exports.handler =  async function(event) {
+  if (!event.body) {
+    return {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      statusCode: 400,
+      body: JSON.stringify({message: 'Please include the postman collection JSON'})
+    }
+  }
+  console.log(JSON.stringify(event));
   const postmanCollectionJSON = JSON.parse(event.body);
+  console.log(postmanCollectionJSON);
   const result = await convertPostmanToSwagger(postmanCollectionJSON);
   if (result.success) {
     const responsePayload = {
@@ -55,8 +67,11 @@ exports.handler =  async function(event, context) {
       warnings: result.warnings
     }
     return {
+      headers: {
+        'Content-Type': 'application/json'
+      },
       statusCode: 200,
-      body: responsePayload
+      body: JSON.stringify(responsePayload)
     };
   }
   else {
@@ -65,8 +80,11 @@ exports.handler =  async function(event, context) {
       errors: result.errors
     }
     return {
+      headers: {
+        'Content-Type': 'application/json'
+      },
       statusCode: 400,
-      body: responsePayload
+      body: JSON.stringify(responsePayload)
     }
   }
 }
