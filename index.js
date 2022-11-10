@@ -15,7 +15,7 @@ const transformPostmantoOAS = postmanCollectionJSON => {
     console.log(e);
     return {
       success: false,
-      error: new Error(e)
+      error: new Error(e.message)
     }
   }
 }
@@ -23,25 +23,33 @@ const transformPostmantoOAS = postmanCollectionJSON => {
 
 const convertPostmanToSwagger = async postmanCollectionJSON => {
   const result = transformPostmantoOAS(postmanCollectionJSON);
-  const conversionOptions = {
-    from: 'openapi_3',
-    to: 'swagger_2'
-  }
   if (result.success) {
-    conversionOptions.source = result.oas;
-    const converted = await Converter.convert(conversionOptions);
-    const conversionValidationResult = await converted.validate();
-    return {
-      success: true,
-      swagger: converted.stringify(),
-      errors: conversionValidationResult.errors,
-      warnings: conversionValidationResult.warnings
+    try {
+      const conversionOptions = {
+        from: 'openapi_3',
+        to: 'swagger_2',
+        source = result.oas
+      };
+      const converted = await Converter.convert(conversionOptions);
+      const conversionValidationResult = await converted.validate();
+      return {
+        success: true,
+        swagger: converted.stringify(),
+        errors: conversionValidationResult.errors,
+        warnings: conversionValidationResult.warnings
+      }
+    }
+    catch (e) {
+      return {
+        success: false,
+        errors: [new Error(e.message)]
+      }
     }
   }
   else {
     return {
       success: false,
-      errors: new Error(result.error)
+      errors: [result.error]
     }
   }
 }

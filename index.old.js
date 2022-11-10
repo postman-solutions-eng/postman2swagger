@@ -4,9 +4,6 @@ const port = process.env.PORT || 3000;
 const Converter = require('api-spec-converter');
 const { transpile } = require('postman2openapi');
 
-
-const https = require('https');
-
 // const httpTransformPostmanToOAS = collectionJSON => {
 //   const options = {
 //     hostname: 'demo.postmansolutions.com',
