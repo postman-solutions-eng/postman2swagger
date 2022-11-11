@@ -5,7 +5,7 @@ const { transpile } = require('postman2openapi');
 const transformPostmantoOAS = postmanCollectionJSON => {
   try {
     const openapi = transpile(postmanCollectionJSON);
-    console.log(openapi);
+    // console.log(openapi);
     return {
       success: true,
       oas: openapi
@@ -28,7 +28,7 @@ const convertPostmanToSwagger = async postmanCollectionJSON => {
       const conversionOptions = {
         from: 'openapi_3',
         to: 'swagger_2',
-        source = result.oas
+        source: result.oas
       };
       const converted = await Converter.convert(conversionOptions);
       const conversionValidationResult = await converted.validate();
@@ -64,9 +64,23 @@ exports.handler =  async function(event) {
       body: JSON.stringify({message: 'Please include the postman collection JSON'})
     }
   }
-  console.log(JSON.stringify(event));
-  const postmanCollectionJSON = JSON.parse(event.body);
-  console.log(postmanCollectionJSON);
+  let postmanCollectionJSON = {};
+  try {
+    postmanCollectionJSON = JSON.parse(event.body);
+  }
+  catch (e) {
+    const responsePayload = {
+      message: 'Error Parsing JSON in Request Body',
+      errors: [e.message]
+    }
+    return {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      statusCode: 400,
+      body: JSON.stringify(responsePayload)
+    }
+  }
   const result = await convertPostmanToSwagger(postmanCollectionJSON);
   if (result.success) {
     const responsePayload = {
